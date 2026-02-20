@@ -4,9 +4,13 @@ import { CalendarEvent } from '../types';
 interface CalendarContextType {
   currentMonth: Date;
   selectedDate: Date | null;
+  selectedStartDate: Date | null;
+  selectedEndDate: Date | null;
   events: CalendarEvent[];
   setCurrentMonth: (month: Date) => void;
   setSelectedDate: (date: Date | null) => void;
+  setSelectedStartDate: (date: Date | null) => void;
+  setSelectedEndDate: (date: Date | null) => void;
   addEvent: (event: CalendarEvent) => void;
 }
 
@@ -17,6 +21,8 @@ export { CalendarContext };
 export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const addEvent = (event: CalendarEvent) => {
@@ -28,9 +34,13 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
       value={{
         currentMonth,
         selectedDate,
+        selectedStartDate,
+        selectedEndDate,
         events,
         setCurrentMonth,
         setSelectedDate,
+        setSelectedStartDate,
+        setSelectedEndDate,
         addEvent,
       }}
     >

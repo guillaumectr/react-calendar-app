@@ -13,6 +13,25 @@
     color: #333;
     transition: all 0.2s ease;
     user-select: none;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .calendar-day {
+        padding: 8px;
+        font-size: 14px;
+        border-radius: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-day {
+        padding: 4px;
+        font-size: 12px;
+        border-radius: 4px;
+        border-width: 1px;
+    }
 }
 
 .calendar-day:hover {
@@ -44,4 +63,53 @@
 
 .calendar-day.other-month:hover {
     background: #f0f0f0;
+}
+
+/* Range selection styles */
+.calendar-day.in-range {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.calendar-day.range-start,
+.calendar-day.range-end {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+    font-weight: 700;
+}
+
+.calendar-day.range-start.today,
+.calendar-day.range-end.today {
+    border-color: #28a745;
+}
+
+.calendar-day.in-range:hover {
+    background: #b6d4fe;
+    transform: scale(1.05);
+}
+
+/* Preview range styles */
+.calendar-day.preview-range {
+    background: #e7f1ff;
+    color: #084298;
+    opacity: 0.7;
+}
+
+.calendar-day.preview-range:hover {
+    background: #d0e7ff;
+    opacity: 0.9;
+    transform: scale(1.05);
+}
+
+.calendar-day.preview-range {
+    background: #e7f1ff;
+    color: #084298;
+    opacity: 0.7;
+}
+
+.calendar-day.preview-range:hover {
+    background: #d0e7ff;
+    opacity: 0.9;
+    transform: scale(1.05);
 }

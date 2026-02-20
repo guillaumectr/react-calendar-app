@@ -74,7 +74,7 @@ const Calendar: React.FC = () => {
         setCurrentMonth(new Date());
     };
 
-    const handleAddEvent = (eventData: {
+    const handleAddEvent = async (eventData: {
         title: string;
         description: string;
         startDate: Date;
@@ -82,21 +82,24 @@ const Calendar: React.FC = () => {
         startTime: string;
         endTime: string;
     }) => {
-        const newEvent = {
-            id: Date.now().toString(),
-            title: eventData.title,
-            description: eventData.description,
-            date: eventData.startDate,
-            endDate: eventData.endDate,
-            startTime: eventData.startTime,
-            endTime: eventData.endTime,
-        };
-        addEvent(newEvent);
-        
-        // Clear selection after adding event
-        setSelectedStartDate(null);
-        setSelectedEndDate(null);
-        setSelectedDate(null);
+        try {
+            await addEvent({
+                title: eventData.title,
+                description: eventData.description,
+                date: eventData.startDate,
+                endDate: eventData.endDate,
+                startTime: eventData.startTime,
+                endTime: eventData.endTime,
+            });
+            
+            // Clear selection after adding event
+            setSelectedStartDate(null);
+            setSelectedEndDate(null);
+            setSelectedDate(null);
+        } catch (error) {
+            console.error('Failed to add event:', error);
+            alert('Failed to save event. Please try again.');
+        }
     };
 
     const handleCloseForm = () => {

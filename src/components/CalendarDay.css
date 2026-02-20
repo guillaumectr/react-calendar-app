@@ -1,0 +1,47 @@
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.calendar-day:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+    transform: scale(1.05);
+}
+
+.calendar-day.selected {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.calendar-day.today {
+    border-color: #28a745;
+    font-weight: 700;
+}
+
+.calendar-day.today.selected {
+    background: #007bff;
+    border-color: #28a745;
+}
+
+.calendar-day.other-month {
+    color: #adb5bd;
+    background: #fafafa;
+}
+
+.calendar-day.other-month:hover {
+    background: #f0f0f0;
+}

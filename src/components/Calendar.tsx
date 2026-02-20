@@ -3,11 +3,13 @@ import { useCalendar } from '../context/CalendarContext';
 import CalendarHeader from './CalendarHeader';
 import CalendarDay from './CalendarDay';
 import EventForm from './EventForm';
+import EventList from './EventList';
 import './Calendar.css';
 
 const Calendar: React.FC = () => {
-    const { currentMonth, selectedDate, selectedStartDate, selectedEndDate, setCurrentMonth, setSelectedDate, setSelectedStartDate, setSelectedEndDate, addEvent } = useCalendar();
+    const { currentMonth, selectedDate, selectedStartDate, selectedEndDate, events, setCurrentMonth, setSelectedDate, setSelectedStartDate, setSelectedEndDate, addEvent, updateEvent } = useCalendar();
     const [hoveredDate, setHoveredDate] = React.useState<Date | null>(null);
+    const [editingEvent, setEditingEvent] = React.useState<any | null>(null);
 
     const getDaysInMonth = (date: Date): Date[] => {
         const year = date.getFullYear();
@@ -29,6 +31,9 @@ const Calendar: React.FC = () => {
     };
 
     const handleDayClick = (date: Date) => {
+        // Clear any editing event when clicking a date
+        setEditingEvent(null);
+        
         // Range selection logic:
         // 1. If no start date, set it as start
         // 2. If start date exists but no end date, set as end (if after start) or restart (if before start)
@@ -102,12 +107,101 @@ const Calendar: React.FC = () => {
         }
     };
 
+    const handleUpdateEvent = async (id: string, eventData: {
+        title: string;
+        description: string;
+        startDate: Date;
+        endDate: Date;
+        startTime: string;
+        endTime: string;
+    }) => {
+        try {
+            await updateEvent(id, {
+                title: eventData.title,
+                description: eventData.description,
+                date: eventData.startDate,
+                endDate: eventData.endDate,
+                startTime: eventData.startTime,
+                endTime: eventData.endTime,
+            });
+            
+            // Clear editing state and selection
+            setEditingEvent(null);
+            setSelectedStartDate(null);
+            setSelectedEndDate(null);
+            setSelectedDate(null);
+        } catch (error) {
+            console.error('Failed to update event:', error);
+            alert('Failed to update event. Please try again.');
+        }
+    };
+
+    const handleEventClick = (event: any) => {
+        // Set editing event and populate form with its dates
+        setEditingEvent(event);
+        setSelectedStartDate(event.date);
+        setSelectedEndDate(event.endDate || null);
+        setSelectedDate(null);
+    };
+
     const handleCloseForm = () => {
         setSelectedStartDate(null);
         setSelectedEndDate(null);
         setSelectedDate(null);
         setHoveredDate(null);
+        setEditingEvent(null);
     };
+
+    const handleCloseEventList = () => {
+        setSelectedDate(null);
+        setSelectedStartDate(null);
+        setSelectedEndDate(null);
+    };
+
+    const getEventsForDate = (date: Date): any[] => {
+        return events.filter(event => {
+            const eventStart = new Date(event.date);
+            const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
+            
+            // Normalize dates to compare only year, month, and day
+            const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+            const endDate = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+            
+            return checkDate >= startDate && checkDate <= endDate;
+        });
+    };
+
+    const getEventsForDateRange = (startDate: Date, endDate: Date): any[] => {
+        const rangeStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const rangeEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        
+        return events.filter(event => {
+            const eventStart = new Date(event.date);
+            const eventEnd = event.endDate ? new Date(event.endDate) : eventStart;
+            
+            const eventStartNorm = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+            const eventEndNorm = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+            
+            // Event overlaps with selected range
+            return eventStartNorm <= rangeEnd && eventEndNorm >= rangeStart;
+        });
+    };
+
+    // Get events for selected date or date range
+    const getSelectedEvents = () => {
+        if (selectedStartDate && selectedEndDate) {
+            return getEventsForDateRange(selectedStartDate, selectedEndDate);
+        } else if (selectedDate) {
+            return getEventsForDate(selectedDate);
+        } else if (selectedStartDate) {
+            return getEventsForDate(selectedStartDate);
+        }
+        return [];
+    };
+
+    const selectedDateEvents = getSelectedEvents();
+    const displayDate = selectedStartDate && selectedEndDate ? null : (selectedDate || selectedStartDate);
 
     const isToday = (date: Date): boolean => {
         const today = new Date();
@@ -174,6 +268,16 @@ const Calendar: React.FC = () => {
 
     return (
         <div className="calendar-container">
+            {selectedDateEvents.length > 0 && (
+                <EventList
+                    events={selectedDateEvents}
+                    selectedDate={displayDate}
+                    selectedStartDate={selectedStartDate}
+                    selectedEndDate={selectedEndDate}
+                    onClose={handleCloseEventList}
+                    onEventClick={handleEventClick}
+                />
+            )}
             <div className="calendar">
                 <CalendarHeader month={monthName} onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth} onToday={handleToday} />
                 <div className="weekday-headers">
@@ -201,11 +305,13 @@ const Calendar: React.FC = () => {
                     ))}
                 </div>
             </div>
-            {(selectedStartDate || selectedEndDate) && (
+            {(selectedStartDate || selectedEndDate || editingEvent) && (
                 <EventForm 
                     selectedStartDate={selectedStartDate}
                     selectedEndDate={selectedEndDate}
+                    editingEvent={editingEvent}
                     onAddEvent={handleAddEvent}
+                    onUpdateEvent={handleUpdateEvent}
                     onClose={handleCloseForm}
                 />
             )}

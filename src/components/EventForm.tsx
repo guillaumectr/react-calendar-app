@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { CalendarEvent } from '../types';
 import './EventForm.css';
 
 interface EventFormProps {
     selectedStartDate: Date | null;
     selectedEndDate: Date | null;
+    editingEvent: CalendarEvent | null;
     onAddEvent: (eventData: {
+        title: string;
+        description: string;
+        startDate: Date;
+        endDate: Date;
+        startTime: string;
+        endTime: string;
+    }) => void;
+    onUpdateEvent: (id: string, eventData: {
         title: string;
         description: string;
         startDate: Date;
@@ -15,19 +25,27 @@ interface EventFormProps {
     onClose: () => void;
 }
 
-const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDate, onAddEvent, onClose }) => {
+const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDate, editingEvent, onAddEvent, onUpdateEvent, onClose }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [startTime, setStartTime] = useState('09:00');
     const [endTime, setEndTime] = useState('10:00');
 
     useEffect(() => {
-        // Reset form when date selection changes
-        setTitle('');
-        setDescription('');
-        setStartTime('09:00');
-        setEndTime('10:00');
-    }, [selectedStartDate, selectedEndDate]);
+        if (editingEvent) {
+            // Populate form with editing event data
+            setTitle(editingEvent.title);
+            setDescription(editingEvent.description || '');
+            setStartTime(editingEvent.startTime || '09:00');
+            setEndTime(editingEvent.endTime || '10:00');
+        } else {
+            // Reset form when date selection changes
+            setTitle('');
+            setDescription('');
+            setStartTime('09:00');
+            setEndTime('10:00');
+        }
+    }, [selectedStartDate, selectedEndDate, editingEvent]);
 
     const addOneHour = (time: string): string => {
         const [hours, minutes] = time.split(':').map(Number);
@@ -65,14 +83,20 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
 
         const effectiveEndDate = selectedEndDate || selectedStartDate;
 
-        onAddEvent({
+        const eventData = {
             title: title.trim(),
             description: description.trim(),
             startDate: selectedStartDate,
             endDate: effectiveEndDate,
             startTime,
             endTime,
-        });
+        };
+
+        if (editingEvent) {
+            onUpdateEvent(editingEvent.id, eventData);
+        } else {
+            onAddEvent(eventData);
+        }
 
         // Reset form
         setTitle('');
@@ -92,7 +116,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
         <div className="event-form-container">
             <div className="event-form">
                 <div className="event-form-header">
-                    <h3>Create Event</h3>
+                    <h3>{editingEvent ? 'Edit Event' : 'Create Event'}</h3>
                     <button type="button" className="close-button" onClick={onClose} title="Close">
                         ✕
                     </button>
@@ -159,7 +183,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
                     </div>
 
                     <button type="submit" className="submit-button">
-                        Add Event
+                        {editingEvent ? 'Update Event' : 'Add Event'}
                     </button>
                 </form>
             </div>

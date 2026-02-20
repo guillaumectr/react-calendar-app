@@ -14,6 +14,7 @@ interface CalendarContextType {
   setSelectedStartDate: (date: Date | null) => void;
   setSelectedEndDate: (date: Date | null) => void;
   addEvent: (event: Omit<CalendarEvent, 'id'>) => Promise<void>;
+  updateEvent: (id: string, event: Omit<CalendarEvent, 'id'>) => Promise<void>;
   loading: boolean;
 }
 
@@ -130,6 +131,50 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
+  const updateEvent = async (id: string, event: Omit<CalendarEvent, 'id'>) => {
+    if (!user) return;
+
+    try {
+      const startDateTime = combineDateTimeToISO(event.date, event.startTime || '00:00');
+      const endDateTime = event.endDate && event.endTime 
+        ? combineDateTimeToISO(event.endDate, event.endTime)
+        : combineDateTimeToISO(event.date, event.endTime || '23:59');
+
+      const { data, error } = await supabase
+        .from('events')
+        .update({
+          title: event.title,
+          description: event.description || null,
+          start_date: startDateTime,
+          end_date: endDateTime,
+        })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const updatedEvent: CalendarEvent = {
+          id: data.id,
+          title: data.title,
+          description: data.description || '',
+          date: new Date(data.start_date),
+          endDate: new Date(data.end_date),
+          startTime: event.startTime,
+          endTime: event.endTime,
+        };
+        setEvents((prevEvents) => 
+          prevEvents.map((evt) => evt.id === id ? updatedEvent : evt)
+        );
+      }
+    } catch (error) {
+      console.error('Error updating event:', error);
+      throw error;
+    }
+  };
+
   return (
     <CalendarContext.Provider
       value={{
@@ -143,6 +188,7 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
         setSelectedStartDate,
         setSelectedEndDate,
         addEvent,
+        updateEvent,
         loading,
       }}
     >

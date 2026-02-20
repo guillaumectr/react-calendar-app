@@ -11,9 +11,10 @@ interface CalendarDayProps {
     isRangeStart?: boolean;
     isRangeEnd?: boolean;
     isInPreviewRange?: boolean;
+    hasEvents?: boolean;
 }
 
-const CalendarDay: React.FC<CalendarDayProps> = ({ date, onClick, onHover, isToday = false, isSelected = false, isInRange = false, isRangeStart = false, isRangeEnd = false, isInPreviewRange = false }) => {
+const CalendarDay: React.FC<CalendarDayProps> = ({ date, onClick, onHover, isToday = false, isSelected = false, isInRange = false, isRangeStart = false, isRangeEnd = false, isInPreviewRange = false, hasEvents = false }) => {
     const handleClick = () => {
         onClick(date);
     };
@@ -44,6 +45,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({ date, onClick, onHover, isTod
             onMouseLeave={handleMouseLeave}
         >
             {date.getDate()}
+            {hasEvents && <div className="event-indicator"></div>}
         </div>
     );
 };

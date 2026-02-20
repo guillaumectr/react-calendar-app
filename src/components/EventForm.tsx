@@ -13,6 +13,7 @@ interface EventFormProps {
         endDate: Date;
         startTime: string;
         endTime: string;
+        eventMode?: 'each-day' | 'all-day';
     }) => void;
     onUpdateEvent: (id: string, eventData: {
         title: string;
@@ -30,6 +31,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
     const [description, setDescription] = useState('');
     const [startTime, setStartTime] = useState('09:00');
     const [endTime, setEndTime] = useState('10:00');
+    const [eventMode, setEventMode] = useState<'each-day' | 'all-day'>('all-day');
 
     useEffect(() => {
         if (editingEvent) {
@@ -44,6 +46,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
             setDescription('');
             setStartTime('09:00');
             setEndTime('10:00');
+            setEventMode('all-day');
         }
     }, [selectedStartDate, selectedEndDate, editingEvent]);
 
@@ -55,15 +58,17 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
 
     const handleStartTimeChange = (newStartTime: string) => {
         setStartTime(newStartTime);
-        // If end time is before or equal to start time, move it forward
-        if (endTime <= newStartTime) {
+        // Only enforce time order for single-day events
+        const isMultiDay = selectedStartDate && selectedEndDate && selectedEndDate > selectedStartDate;
+        if (!isMultiDay && endTime <= newStartTime) {
             setEndTime(addOneHour(newStartTime));
         }
     };
 
     const handleEndTimeChange = (newEndTime: string) => {
-        // Only allow end time to be set if it's after start time
-        if (newEndTime > startTime) {
+        // For multi-day events, allow any time
+        const isMultiDay = selectedStartDate && selectedEndDate && selectedEndDate > selectedStartDate;
+        if (isMultiDay || newEndTime > startTime) {
             setEndTime(newEndTime);
         }
     };
@@ -95,7 +100,10 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
         if (editingEvent) {
             onUpdateEvent(editingEvent.id, eventData);
         } else {
-            onAddEvent(eventData);
+            onAddEvent({
+                ...eventData,
+                eventMode: selectedEndDate ? eventMode : 'all-day',
+            });
         }
 
         // Reset form
@@ -103,6 +111,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
         setDescription('');
         setStartTime('09:00');
         setEndTime('10:00');
+        setEventMode('all-day');
     };
 
     if (!selectedStartDate) {
@@ -111,6 +120,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
 
     const isRange = selectedEndDate !== null;
     const displayEndDate = selectedEndDate || selectedStartDate;
+    const isMultiDay = selectedEndDate && selectedEndDate.getTime() !== selectedStartDate.getTime();
 
     return (
         <div className="event-form-container">
@@ -134,6 +144,34 @@ const EventForm: React.FC<EventFormProps> = ({ selectedStartDate, selectedEndDat
                         )}
                     </div>
                 </div>
+
+                {isMultiDay && !editingEvent && (
+                    <div className="event-mode-toggle">
+                        <label>Event Type</label>
+                        <div className="toggle-buttons">
+                            <button
+                                type="button"
+                                className={`toggle-button ${eventMode === 'all-day' ? 'active' : ''}`}
+                                onClick={() => setEventMode('all-day')}
+                            >
+                                All Day
+                            </button>
+                            <button
+                                type="button"
+                                className={`toggle-button ${eventMode === 'each-day' ? 'active' : ''}`}
+                                onClick={() => setEventMode('each-day')}
+                            >
+                                Each Day
+                            </button>
+                        </div>
+                        <div className="toggle-description">
+                            {eventMode === 'all-day' 
+                                ? 'Creates a single event spanning the entire date range'
+                                : 'Creates a separate event for each day in the range'
+                            }
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
